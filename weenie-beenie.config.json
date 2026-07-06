@@ -1,0 +1,12 @@
+{
+  "scoreThreshold": 80,
+  "maxRewrites": 3,
+  "onExhaustion": "commit-warn",
+  "test": {
+    "command": null
+  },
+  "commit": {
+    "style": "conventional",
+    "push": false
+  }
+}

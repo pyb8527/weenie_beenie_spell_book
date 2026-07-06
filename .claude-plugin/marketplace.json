@@ -1,0 +1,26 @@
+{
+  "name": "weenie-beenie-marketplace",
+  "description": "Local marketplace for the weenie-beenie quality-gated pipeline plugin",
+  "owner": {
+    "name": "Triphos"
+  },
+  "plugins": [
+    {
+      "name": "weenie-beenie",
+      "description": "Quality-gated auto-implementation pipeline: Plan -> Implement -> Review -> rewrite-until-pass -> Test -> Commit",
+      "version": "0.1.0",
+      "category": "development",
+      "tags": [
+        "pipeline",
+        "code-review",
+        "quality-gate",
+        "skills",
+        "agents"
+      ],
+      "compatibility": {
+        "minClaudeCodeVersion": "2.0.0"
+      },
+      "source": "./"
+    }
+  ]
+}

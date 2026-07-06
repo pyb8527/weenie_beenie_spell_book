@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Local Claude Code state (not part of the plugin)
+.claude/settings.local.json
+.qe/
+
+# weenie-beenie transient stage state (plan / review handoff files)
+.wb/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

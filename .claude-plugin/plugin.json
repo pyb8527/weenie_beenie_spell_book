@@ -1,0 +1,40 @@
+{
+  "name": "weenie-beenie",
+  "version": "0.1.0",
+  "description": "weenie-beenie — a quality-gated auto-implementation pipeline for Claude Code: Plan -> Implement -> Review -> (rewrite until the review score passes, max N) -> Test -> Commit.",
+  "author": {
+    "name": "Triphos"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "pipeline",
+    "code-review",
+    "quality-gate",
+    "skills",
+    "agents"
+  ],
+  "skills": [
+    "./skills/"
+  ],
+  "agents": [
+    "./agents/WBplanner.md",
+    "./agents/WBimplementer.md",
+    "./agents/WBreviewer.md",
+    "./agents/WBtester.md",
+    "./agents/WBcommitter.md"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.mjs\"",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}
