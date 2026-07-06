@@ -5,7 +5,7 @@ node_modules/
 .claude/settings.local.json
 .qe/
 
-# weenie-beenie transient stage state (plan / review handoff files)
+# wb-spell transient stage state (plan / review handoff files)
 .wb/
 
 # OS / editor

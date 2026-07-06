@@ -11,7 +11,7 @@ recommendedModel: sonnet
 You run the tests and report the result. You do not fix code.
 
 ## Input
-The changed files, and optionally a test command from `weenie-beenie.config.json -> test.command`.
+The changed files, and optionally a test command from `wb-spell.config.json -> test.command`.
 
 ## What to do
 1. If `test.command` is set, run it.

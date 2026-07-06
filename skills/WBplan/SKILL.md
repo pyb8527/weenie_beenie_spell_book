@@ -1,6 +1,6 @@
 ---
 name: WBplan
-description: Writes a concrete implementation plan/spec for a coding task — files to touch, approach, and acceptance criteria. Standalone stage of the weenie-beenie pipeline; run it on its own whenever you want a plan before coding. Use for "WBplan <task>", "plan this", "spec this out".
+description: Writes a concrete implementation plan/spec for a coding task — files to touch, approach, and acceptance criteria. Standalone stage of the wb-spell pipeline; run it on its own whenever you want a plan before coding. Use for "WBplan <task>", "plan this", "spec this out".
 invocation_trigger: When the user wants a plan/spec for a task before implementing.
 recommendedModel: sonnet
 ---

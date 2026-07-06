@@ -1,6 +1,6 @@
 ---
 name: WBreview
-description: Reviews the current code changes, scores them 0-100, and rewrites until the score passes the gate (max N rewrites). The core quality gate of weenie-beenie. Standalone — run it any time on existing changes. Use for "WBreview", "review and fix", "run the gate".
+description: Reviews the current code changes, scores them 0-100, and rewrites until the score passes the gate (max N rewrites). The core quality gate of wb-spell. Standalone — run it any time on existing changes. Use for "WBreview", "review and fix", "run the gate".
 invocation_trigger: When the user wants existing changes reviewed and auto-improved until they pass a quality bar.
 recommendedModel: sonnet
 ---
@@ -13,7 +13,7 @@ rewrite -> review until the score passes or the rewrite budget is exhausted. Thi
 standalone stage; it assumes code already exists (written by the user or a prior stage).
 
 ## Configuration
-Read `weenie-beenie.config.json` (defaults if absent):
+Read `wb-spell.config.json` (defaults if absent):
 
 ```json
 { "scoreThreshold": 80, "maxRewrites": 3, "onExhaustion": "commit-warn" }

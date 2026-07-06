@@ -1,7 +1,7 @@
 {
-  "name": "weenie-beenie",
+  "name": "wb-spell",
   "version": "0.1.0",
-  "description": "weenie-beenie — a quality-gated auto-implementation pipeline for Claude Code: Plan -> Implement -> Review -> (rewrite until the review score passes, max N) -> Test -> Commit.",
+  "description": "wb-spell — a quality-gated auto-implementation pipeline for Claude Code: Plan -> Implement -> Review -> (rewrite until the review score passes, max N) -> Test -> Commit.",
   "author": {
     "name": "Triphos"
   },

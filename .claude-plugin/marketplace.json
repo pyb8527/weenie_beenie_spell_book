@@ -1,12 +1,12 @@
 {
-  "name": "weenie-beenie-marketplace",
-  "description": "Local marketplace for the weenie-beenie quality-gated pipeline plugin",
+  "name": "weenie-beenie-spell-book",
+  "description": "Local marketplace for the wb-spell quality-gated pipeline plugin",
   "owner": {
     "name": "Triphos"
   },
   "plugins": [
     {
-      "name": "weenie-beenie",
+      "name": "wb-spell",
       "description": "Quality-gated auto-implementation pipeline: Plan -> Implement -> Review -> rewrite-until-pass -> Test -> Commit",
       "version": "0.1.0",
       "category": "development",

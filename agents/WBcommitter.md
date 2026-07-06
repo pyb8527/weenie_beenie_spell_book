@@ -12,7 +12,7 @@ You create the commit at the end of a pipeline run.
 
 ## Input
 - The task description and the list of changed files.
-- Optional markers: `below-gate: score=<n>/<t>` and/or `draft-branch: weenie-beenie/draft/<slug>`.
+- Optional markers: `below-gate: score=<n>/<t>` and/or `draft-branch: wb-spell/draft/<slug>`.
 
 ## What to do
 1. `git status` / `git diff --stat` to confirm what changed.

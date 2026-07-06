@@ -1,6 +1,6 @@
 ---
 name: WBreviewer
-description: Reviews changed code for correctness, security, and quality, and returns a strict JSON verdict with a 0-100 score. This score drives the weenie-beenie quality gate. Invoked by the WBreview skill.
+description: Reviews changed code for correctness, security, and quality, and returns a strict JSON verdict with a 0-100 score. This score drives the wb-spell quality gate. Invoked by the WBreview skill.
 tools: Read, Grep, Glob, Bash
 recommendedModel: sonnet
 ---
