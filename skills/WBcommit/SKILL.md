@@ -15,9 +15,17 @@ ready, whether or not the other stages were used.
 1. If `.wb/review.json` exists, read it. If `belowGate` is true, plan to tag the commit
    with `[below-gate: score=<finalScore>/<threshold>]`. If `onExhaustion` is
    `draft-branch`, plan to commit onto `wb-spell/draft/<slug>`.
-2. Delegate to the `WBcommitter` agent with the task summary and the markers above.
-3. It confirms the diff, (optionally) creates the draft branch, stages the changed files,
-   writes a concise message, and commits.
+2. **Plugin version bump.** Read `commit.bumpPluginVersion` from `wb-spell.config.json`
+   (default `"patch"`; `false` disables it). If it is not `false`, the repo root has a
+   `.claude-plugin/plugin.json`, **and** the pending changes touch the plugin surface
+   (`skills/`, `agents/`, `hooks/`, or `.claude-plugin/plugin.json`), pass a
+   `bump-plugin-version: <level>` marker so the committer bumps `plugin.json`'s `version`
+   by that semver level and includes it in the same commit. This is what lets a marketplace
+   `update` actually re-pull the plugin — installs are keyed by version. Skip the bump for
+   non-plugin repos or changes that don't touch the plugin surface.
+3. Delegate to the `WBcommitter` agent with the task summary and the markers above.
+4. It confirms the diff, (optionally) creates the draft branch, applies any version bump,
+   stages the changed files, writes a concise message, and commits.
 
 ## Output
 ```
