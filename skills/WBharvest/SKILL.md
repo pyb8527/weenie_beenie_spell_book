@@ -32,9 +32,12 @@ Prefix = `harvest.namePrefix` ?? `"WB"`.
    clone the repo then scope discovery to that subdir.
 3. **Discover candidates.** Every directory that directly contains a `SKILL.md` is one
    candidate skill. List them with their paths.
-4. **Score each candidate.** Delegate each to the `WBharvester` agent (run them in parallel
-   when there are several). The agent returns strict JSON `{ score, proposedName, category,
-   findings, summary, safety }`. `safety: "unsafe"` is an automatic reject regardless of score.
+4. **Score each candidate — in parallel.** Candidates are independent, so spawn **one
+   `WBharvester` agent per candidate, all launched in a single message** so they run
+   concurrently (the harness caps how many run at once and queues the rest — just launch
+   them all). Each returns strict JSON `{ score, proposedName, category, findings, summary,
+   safety }`. `safety: "unsafe"` is an automatic reject regardless of score. Collect every
+   verdict before gating.
 5. **Gate.** Keep a candidate only if `score >= threshold` **and** `safety != "unsafe"`.
 6. **Import each kept skill** into `skills/<WBname>/`:
    - Compute `<WBname>` = prefix + PascalCase of the source slug (drop non-alphanumerics):

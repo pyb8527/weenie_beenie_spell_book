@@ -23,12 +23,23 @@ Read `wb-spell.config.json` (defaults if absent):
 1. Identify the changes to review: `git diff` (staged + unstaged) if in a git repo,
    otherwise ask the user which files. If `.wb/plan.md` exists, load its acceptance
    criteria to judge against.
-2. **Review**: delegate to the `WBreviewer` agent → strict JSON `{ score, findings, summary }`.
+2. **Review** (fan out for large diffs):
+   - **Small diff** (a few related files) → one `WBreviewer` agent →
+     strict JSON `{ score, findings, summary }`.
+   - **Large diff spanning many independent files** → split the changed files into
+     **disjoint groups** and spawn **one `WBreviewer` per group, all in a single message**
+     so they run in parallel. Give each reviewer its file group plus the shared acceptance
+     criteria. Then aggregate: **aggregate score = the *minimum* group score** (weakest
+     link — keeps the gate conservative), and **findings = the union** of all groups'
+     findings. Use this aggregate score/findings for the gate below.
 3. **Gate**:
    - `score >= scoreThreshold` → PASS. Stop the loop.
-   - `score < scoreThreshold` and rewrites remaining → delegate to the `WBimplementer`
-     agent with this round's `findings`, then go back to step 2 (re-review). Increment
-     the rewrite counter.
+   - `score < scoreThreshold` and rewrites remaining → **fix the findings, in parallel
+     when they are separable**: group the round's `findings` by the file(s) they touch
+     into **disjoint file sets**, then spawn **one `WBimplementer` per set in a single
+     message** (each told to touch only its files). If findings collide on a shared file,
+     keep those in one agent. Then go back to step 2 (re-review). Increment the rewrite
+     counter.
    - rewrites exhausted (`>= maxRewrites`) → apply `onExhaustion`:
      - `commit-warn` (default) → **keep the last implemented code**, mark below-gate.
      - `escalate` → stop and report findings; let the user decide.
@@ -49,4 +60,7 @@ Outstanding findings: <n>   (saved to .wb/review.json)
 ## Rules
 - This stage does NOT run tests and does NOT commit — use WBtest / WBcommit for those.
 - Never fabricate findings to pad the score; a clean diff should pass on the first round.
+- **Parallel safety:** parallel reviewers must cover disjoint file groups, and parallel
+  rewrite agents must own disjoint files — never let two agents write the same file in one
+  round. Launch parallel agents in a single message so they run concurrently.
 - Match the user's language in the summary.
