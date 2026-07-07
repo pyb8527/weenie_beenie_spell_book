@@ -8,5 +8,10 @@
   "commit": {
     "style": "conventional",
     "push": false
+  },
+  "harvest": {
+    "scoreThreshold": 80,
+    "namePrefix": "WB",
+    "skipExisting": true
   }
 }

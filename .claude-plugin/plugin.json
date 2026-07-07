@@ -22,7 +22,8 @@
     "./agents/WBimplementer.md",
     "./agents/WBreviewer.md",
     "./agents/WBtester.md",
-    "./agents/WBcommitter.md"
+    "./agents/WBcommitter.md",
+    "./agents/WBharvester.md"
   ],
   "hooks": {
     "SessionStart": [

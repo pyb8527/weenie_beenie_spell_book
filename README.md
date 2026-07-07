@@ -18,6 +18,7 @@
 | `/WBreview` | 현재 변경분을 리뷰 → 0~100 점수 → 미달 시 재작성 반복(게이트). 결과를 `.wb/review.json`에 저장 |
 | `/WBtest` | 테스트 실행 후 pass/fail 보고 |
 | `/WBcommit` | 변경분 커밋 (`.wb/review.json`의 below-gate 표시 반영) |
+| `/WBharvest <github-url>` | 외부 스킬 저장소를 클론 → 각 스킬을 0~100점 채점(`WBharvester`) → 게이트(기본 80점) 통과분만 `WB*` 형식 내 스킬로 가져오기 |
 
 > `/WBimplement`도 **독립 스킬**입니다 — 코드를 평소처럼 직접 쓰고 `/WBreview`만
 > 씌워도 되고, `/WBplan → /WBimplement`로 계획부터 구현까지 이어가도 됩니다.
@@ -36,13 +37,15 @@
 │   ├── WBimplement/SKILL.md
 │   ├── WBreview/SKILL.md
 │   ├── WBtest/SKILL.md
-│   └── WBcommit/SKILL.md
+│   ├── WBcommit/SKILL.md
+│   └── WBharvest/SKILL.md    # 외부 저장소에서 스킬을 채점·필터해 WB* 형식으로 가져오기
 ├── agents/                  # 각 스킬이 위임하는 전담 워커 (메인 컨텍스트 보호)
 │   ├── WBplanner.md
 │   ├── WBimplementer.md
 │   ├── WBreviewer.md
 │   ├── WBtester.md
-│   └── WBcommitter.md
+│   ├── WBcommitter.md
+│   └── WBharvester.md        # 후보 스킬 하나를 0~100점 + safety로 채점
 ├── hooks/
 │   └── scripts/session-start.mjs   # 세션 시작 시 게이트 설정 주입
 ├── wb-spell.config.json       # 게이트 설정
@@ -106,6 +109,7 @@
 - [x] 단계별 독립 스킬로 분해 (WBplan / WBimplement / WBreview / WBtest / WBcommit)
 - [x] `onExhaustion` = `commit-warn` (마지막 구현 코드로 진행)
 - [x] `WBimplement` 스킬 추가 (계획 → 자동 구현)
+- [x] `WBharvest` 스킬 추가 (외부 저장소 스킬 채점·필터·가져오기)
 - [ ] reviewer 루브릭을 팀 규칙(보안 체크리스트 등)에 맞게 확장
 - [ ] tester 러너 추가 (Gradle, Maven 등)
 - [ ] 실제 로드 테스트로 `/WB*` 명령 노출 확인
