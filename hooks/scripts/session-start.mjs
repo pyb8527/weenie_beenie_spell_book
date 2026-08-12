@@ -14,7 +14,8 @@ try {
     maxRewrites: 3,
     onExhaustion: 'escalate',
     failOnTestFailure: true,
-    run: { issue: { github: false }, checkpoints: ['plan', 'commit'], maxCycles: 1 },
+    run: { issue: { github: false }, checkpoints: ['plan', 'ship'], maxCycles: 1 },
+    ship: { mode: 'pr', branchPrefix: 'wb/', bumpPluginVersion: 'patch' },
     plan: { research: { mode: 'auto', maxScouts: 4 }, critique: true, maxReplans: 1 },
   };
   let cfg = { ...defaults };
@@ -37,13 +38,18 @@ try {
 
   const run = { ...defaults.run, ...(cfg.run || {}) };
   const checkpoints = Array.isArray(run.checkpoints) ? run.checkpoints : defaults.run.checkpoints;
+  // `commit` is the pre-0.3 name for the ship block — keep reading it so old configs still work.
+  const ship = { ...defaults.ship, ...(cfg.commit || {}), ...(cfg.ship || {}) };
 
   const runNote =
     `/WBspell <task> is the main entry: writes .wb/issue.md from the request (or a GitHub issue ` +
-    `via "#123"), then drives /WBplan -> /WBimplement -> /WBreview -> /WBcommit, logs .wb/run.md, ` +
+    `via "#123"), then drives /WBplan -> /WBimplement -> /WBreview -> /WBship, logs .wb/run.md, ` +
     `and resumes an interrupted run. Pauses at checkpoint(s): ` +
     (checkpoints.length ? checkpoints.join(', ') : 'none (runs straight through)') +
-    `. A gate that stops is a stop — never route around one.`;
+    `. A gate that stops is a stop — never route around one. ` +
+    `/WBship (formerly /WBcommit) delivers per ship.mode="${ship.mode}": ` +
+    `commit | branch | pr (branch -> commit -> push -> PR, body written from the .wb/ artifacts, ` +
+    `draft when below-gate). Confirm before pushing or opening a PR; never merge — the user does that.`;
 
   const planGate = plan.critique === false
     ? `Plan critique is disabled (plan.critique=false).`
@@ -59,12 +65,12 @@ try {
     `it ranks findings, it does not certify quality. ` +
     `Stages are independent skills — run only what you need: ` +
     `/WBspell <task> (all of it), /WBresearch <task>, /WBplan <task>, /WBcritique, /WBimplement, ` +
-    `/WBreview, /WBtest, /WBcommit. ` +
+    `/WBreview, /WBtest, /WBship. ` +
     `Stages hand off through markdown artifacts in .wb/ — issue.md + run.md (orchestrator) ` +
     `-> research.md (verified facts) ` +
     `-> plan.md (units + parallelization) ` +
     `-> plan-review.md (plan critique) -> implement.md (live progress board, one row per unit) ` +
-    `-> review.md + review.json -> test.md -> commit.md; each stage reads the previous one's ` +
+    `-> review.md + review.json -> test.md -> ship.md; each stage reads the previous one's ` +
     `file and writes its own. ` +
     `/WBplan archives the previous cycle into .wb/history/.`;
 

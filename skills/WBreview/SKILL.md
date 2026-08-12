@@ -68,11 +68,11 @@ number is a tiebreaker on top of those, not a substitute for them.
      - `escalate` (default) → **stop and report** the outstanding findings/test failures;
        let the user decide. The pipeline does not silently ship below-gate code.
      - `commit-warn` → keep the last implemented code, mark below-gate (opt-in only).
-     - `draft-branch` → mark for a draft branch (WBcommit handles the branch).
+     - `draft-branch` → mark for a draft branch (WBship handles the branch).
 5. **Write both outcome artifacts.**
    - `.wb/review.md` — the human-readable report (template below). Append each round to
      the round log as it completes, so an interrupted gate still leaves a readable trail.
-   - `.wb/review.json` — the machine verdict WBcommit reads:
+   - `.wb/review.json` — the machine verdict WBship reads:
      ```json
      { "finalScore": 0, "threshold": 80, "testsPassed": true, "highSeverityOpen": 0, "belowGate": false, "onExhaustion": "escalate", "rounds": 0 }
      ```
@@ -129,11 +129,11 @@ updated: <YYYY-MM-DD HH:MM>
 ```
 WBreview — tests <pass|fail>, <finalScore>/100 (threshold <t>, <R> rewrite round(s)) -> <PASS|BELOW-GATE>
 Outstanding findings: <n>
-(report: .wb/review.md · verdict: .wb/review.json → next: /WBcommit)
+(report: .wb/review.md · verdict: .wb/review.json → next: /WBship)
 ```
 
 ## Rules
-- This stage **runs the tests as part of the gate** but does NOT commit — use WBcommit for that.
+- This stage **runs the tests as part of the gate** but does NOT commit — use WBship for that.
   (WBtest remains available to run the suite standalone.)
 - **You own `.wb/review.md`** — reviewer and implementer agents never write it. Transcribe
   their returns into the report yourself, so parallel agents cannot clobber the file.

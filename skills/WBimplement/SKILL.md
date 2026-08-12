@@ -11,7 +11,7 @@ recommendedModel: sonnet
 Turn the plan into working code and **keep one progress board** — `.wb/implement.md` —
 that reflects the state of every work unit, including units running in parallel. This
 stage writes code; it does not review, test, or commit (those are WBreview / WBtest /
-WBcommit).
+WBship).
 
 ## What to do
 1. **Read the upstream artifact.** In this order of preference:

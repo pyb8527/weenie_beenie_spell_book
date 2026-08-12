@@ -1,7 +1,7 @@
 {
   "name": "wb-spell",
-  "version": "0.2.1",
-  "description": "wb-spell — a quality-gated implementation pipeline for Claude Code. /WBspell drives the whole thing from an issue: Research (parallel multi-lens scouts, evidence-verified) -> Plan -> Critique (red-team the plan, re-plan on blockers) -> Implement (parallel units) -> Review (rewrite until tests pass and the score clears the gate) -> Commit — pausing at human checkpoints. Stages are independent skills handing off through markdown artifacts in .wb/.",
+  "version": "0.3.0",
+  "description": "wb-spell — a quality-gated implementation pipeline for Claude Code. /WBspell drives the whole thing from an issue: Research (parallel multi-lens scouts, evidence-verified) -> Plan -> Critique (red-team the plan, re-plan on blockers) -> Implement (parallel units) -> Review (rewrite until tests pass and the score clears the gate) -> Ship (branch, commit, push, PR — never merge) — pausing at human checkpoints. Stages are independent skills handing off through markdown artifacts in .wb/.",
   "author": {
     "name": "Triphos"
   },
@@ -25,7 +25,7 @@
     "./agents/WBimplementer.md",
     "./agents/WBreviewer.md",
     "./agents/WBtester.md",
-    "./agents/WBcommitter.md",
+    "./agents/WBshipper.md",
     "./agents/WBharvester.md"
   ],
   "hooks": {

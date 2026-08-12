@@ -7,7 +7,7 @@
     "issue": {
       "github": false
     },
-    "checkpoints": ["plan", "commit"],
+    "checkpoints": ["plan", "ship"],
     "maxCycles": 1
   },
   "plan": {
@@ -21,9 +21,12 @@
   "test": {
     "command": null
   },
-  "commit": {
+  "ship": {
+    "mode": "pr",
+    "branchPrefix": "wb/",
+    "base": null,
+    "draft": false,
     "style": "conventional",
-    "push": false,
     "bumpPluginVersion": "patch"
   },
   "harvest": {

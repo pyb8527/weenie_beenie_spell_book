@@ -9,10 +9,10 @@
 /WBspell <작업>
    │  이슈 작성(.wb/issue.md) → 아래를 순서대로 구동 → .wb/run.md에 진행 기록
    ▼
-[/WBresearch] → [/WBplan] → [/WBcritique] → [/WBimplement] → [/WBreview] → (tests+score ≥ gate?) → [/WBcommit]
+[/WBresearch] → [/WBplan] → [/WBcritique] → [/WBimplement] → [/WBreview] → (tests+score ≥ gate?) → [/WBship]
   (렌즈별 병렬 조사               ▲   │            (unit별 병렬 구현)      ▲              │ no
    → 근거 검증 → 채택)            └───┘ 재계획                            └─ rewrite (max N회) ┘
-                                  ⏸ 체크포인트(plan)                        ⏸ 체크포인트(commit)
+                                  ⏸ 체크포인트(plan)                        ⏸ 체크포인트(ship)
 ```
 
 | 스킬 | 하는 일 | 읽는 것 → 남기는 것 |
@@ -24,7 +24,7 @@
 | `/WBimplement <작업>` | 계획의 unit을 wave 단위로 구현. 병렬이면 unit당 에이전트 1개를 **한 메시지에 동시 실행**하고, 진행상태는 **보드 하나**로 관리 | `.wb/plan.md` → `.wb/implement.md` |
 | `/WBreview` | 리뷰 → **테스트 먼저 실행**(실패 시 점수 무관 자동 미달) → 0~100 점수 → 미달 시 재작성 반복(게이트) | `plan.md`+`implement.md` → `.wb/review.md`(보고서) + `.wb/review.json`(게이트 값) |
 | `/WBtest` | 테스트 실행 후 pass/fail 보고 | `implement.md` → `.wb/test.md` |
-| `/WBcommit` | 변경분 커밋 (`review.json`의 below-gate 표시 반영) | `plan/implement/review` → `.wb/commit.md` |
+| `/WBship` | **배송** — `ship.mode`에 따라 커밋 / 브랜치+커밋 / **브랜치+커밋+푸시+PR**. PR 본문을 `.wb/` 산출물로 작성, below-gate면 draft. **머지는 안 함** | `issue/plan/review/test` → `.wb/ship.md` |
 | `/WBharvest <github-url>` | 외부 스킬 저장소를 클론 → 각 스킬을 0~100점 채점(`WBharvester`) → 게이트(기본 80점) 통과분만 `WB*` 형식 내 스킬로 가져오기 |
 
 > `/WBimplement`도 **독립 스킬**입니다 — 코드를 평소처럼 직접 쓰고 `/WBreview`만
@@ -47,7 +47,7 @@
 │   ├── WBimplement/SKILL.md
 │   ├── WBreview/SKILL.md
 │   ├── WBtest/SKILL.md
-│   ├── WBcommit/SKILL.md
+│   ├── WBship/SKILL.md
 │   └── WBharvest/SKILL.md    # 외부 저장소에서 스킬을 채점·필터해 WB* 형식으로 가져오기
 ├── agents/                  # 각 스킬이 위임하는 전담 워커 (메인 컨텍스트 보호)
 │   ├── WBscout.md            # 렌즈 1개를 맡아 근거(file:line)와 함께 조사 — 병렬 실행
@@ -57,7 +57,7 @@
 │   ├── WBimplementer.md
 │   ├── WBreviewer.md
 │   ├── WBtester.md
-│   ├── WBcommitter.md
+│   ├── WBshipper.md
 │   └── WBharvester.md        # 후보 스킬 하나를 0~100점 + safety로 채점
 ├── hooks/
 │   └── scripts/session-start.mjs   # 세션 시작 시 게이트 설정 주입
@@ -82,20 +82,21 @@
 ├── plan-review.md  # WBcritique — 계획 비판 보고서 (판정 · 라운드 로그 · P1..Pn의 OPEN/RESOLVED · 보안 점검표 · 수용한 위험)
 ├── implement.md    # WBimplement — 진행상태 보드 (unit별 pending/running/done/failed) · 변경 파일 · 계획과의 차이
 ├── review.md       # WBreview — 리뷰 보고서 (판정 · 라운드 로그 · 지적 F1..Fn의 OPEN/FIXED · 인수기준 대조)
-├── review.json     # WBreview — 게이트 기계값 (belowGate 등, WBcommit이 읽음)
+├── review.json     # WBreview — 게이트 기계값 (belowGate 등, WBship이 읽음)
 ├── test.md         # WBtest   — 테스트 보고서 (결과 · 실패 상세 · 변경 파일 커버리지)
-├── commit.md       # WBcommit — 커밋 기록 (sha · 메시지 · 커밋 시점의 게이트 상태)
+├── pr-body.md      # WBship   — 산출물로 조립한 PR 본문 (gh pr create --body-file로 들어감)
+├── ship.md         # WBship   — 배송 기록 (sha · 브랜치 · PR URL · 배송 시점의 게이트 상태)
 └── history/        # 이전 사이클 (다음 /WBplan 실행 시 자동 보관)
 ```
 
 ```
-/WBplan ──► /WBcritique ─plan.md(개정)─► /WBimplement ─implement.md─► /WBreview ──► /WBcommit
+/WBplan ──► /WBcritique ─plan.md(개정)─► /WBimplement ─implement.md─► /WBreview ──► /WBship
                  │  ▲                         │                         ▲    │
                  └──┘ 재계획 루프         (unit별 병렬 실행)          재작성 루프 ┘
               (blocker 있으면)                                    (테스트 실패/미달이면)
 ```
 
-### 0) 메인 오케스트레이터 — 이슈에서 커밋까지
+### 0) 메인 오케스트레이터 — 이슈에서 PR까지
 
 ```
 /WBspell 로그인 폼에 이메일 형식 검증 추가
@@ -107,15 +108,15 @@
 제약, 그리고 **자기가 채워 넣은 가정**. 애매해서 해석에 따라 결과물이 달라지는 지점은
 **여기서 한 번 묻습니다.** 잘못된 전제를 이슈 단계에서 잡으면 문장 하나지만, 리뷰
 단계에서 잡으면 파이프라인 전체를 날립니다. 그 다음 `/WBplan → /WBimplement → /WBreview
-→ /WBcommit`을 구동하고, 각 단계의 산출물을 다음 단계로 넘기며 `.wb/run.md`에 기록합니다.
+→ /WBship`을 구동하고, 각 단계의 산출물을 다음 단계로 넘기며 `.wb/run.md`에 기록합니다.
 
 **멈추는 것이 이 파이프라인의 값어치입니다.**
 
 | 규칙 | 동작 |
 |---|---|
-| 체크포인트 | 기본 `["plan", "commit"]` — 계획 승인(사람 판단이 가장 싼 지점)과 커밋(되돌리기 어려운 지점)에서 정지. `[]`로 전 구간 자동은 **명시적 opt-in** |
+| 체크포인트 | 기본 `["plan", "ship"]` — 계획 승인(사람 판단이 가장 싼 지점)과 배송(되돌리기 어려운 지점)에서 정지. `[]`로 전 구간 자동은 **명시적 opt-in** |
 | 게이트 정지 | 계획 비판이 blocker로 에스컬레이션하거나 리뷰가 BELOW-GATE면 **거기서 멈춤**. 동의할 때까지 단계를 다시 돌리는 우회 금지 |
-| 외부 영향 | GitHub 이슈 생성·커밋·브랜치·푸시는 **먼저 확인**. 파이프라인 부수효과로 공개 이슈를 만들지 않음 |
+| 외부 영향 | GitHub 이슈 생성·브랜치·푸시·PR은 **먼저 확인**. 파이프라인 부수효과로 공개 이슈/PR을 만들지 않음. **머지는 절대 안 함** |
 | 규모 | 한 줄 수정이면 그렇게 말하고 짧은 경로(`/WBimplement` + `/WBreview`)를 제안. 오타에 6단계를 쓰는 건 비용이지 철저함이 아님 |
 | 재개 | 중단·차단된 실행은 `.wb/run.md`의 다음 단계부터. 앞 단계 산출물은 유효하므로 처음부터 다시 돌지 않음 |
 
@@ -190,6 +191,28 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
 돌리면 이전 사이클 파일이 `.wb/history/<타임스탬프>-<슬러그>/`로 보관되므로, 다음 단계가
 **옛 계획을 잘못 읽는 일이 없습니다.**
 
+### 3) 배송 — 브랜치 · 커밋 · 푸시 · PR (머지는 사람이)
+
+`/WBship`(구 `/WBcommit`)은 `ship.mode`로 어디까지 갈지 정합니다:
+
+| mode | 동작 |
+|---|---|
+| `"commit"` | 현재 브랜치에 커밋. **기계 밖으로 아무것도 안 나감** |
+| `"branch"` | 작업 브랜치 생성 후 커밋 |
+| `"pr"` (기본) | 브랜치 → 커밋 → 푸시 → **PR 생성** |
+
+**PR 본문을 `.wb/` 산출물로 조립합니다** — 이슈의 문제와 Done when, 계획의 접근법, 변경
+파일, **테스트 상태·리뷰 점수·미해결 지적**, 계획 비판에서 수용한 위험. 이 재료가 이미
+다 쌓여 있으니 리뷰어가 실제로 필요로 하는 PR이 나옵니다.
+
+| 안전 규칙 | 동작 |
+|---|---|
+| **머지 금지** | `gh pr merge`·`--admin`·auto-merge 전부 금지. 머지는 **항상** 사람이 |
+| below-gate | 게이트 미달이면 **draft PR**로 열고 본문 최상단에 판정 배너. 미달을 통과처럼 위장하지 않음 |
+| 확인 | 푸시·PR 생성 전에 diff stat·브랜치·base·게이트 판정을 보여주고 **대기**. 한 번의 승인이 다음 번 승인이 되지 않음 |
+| 브랜치 | 이미 피처 브랜치 위면 그 위에 커밋 (브랜치를 또 파지 않음). base 브랜치 직접 푸시·force-push 금지 |
+| 강등 | 원격 없음 / GitHub 아님 / `gh` 없음 → `branch`나 `commit`으로 **강등하고 그 사실을 보고**. 절반만 된 걸 완료로 말하지 않음 |
+
 ---
 
 ## 게이트 설정 (`wb-spell.config.json`)
@@ -201,9 +224,16 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
   "onExhaustion": "escalate",   // 3회 소진 후에도 미달이면? (기본: 사람에게 보고)
   "failOnTestFailure": true,    // 테스트 실패 시 점수 무관 자동 미달
   "run": {
-    "issue": { "github": false },      // true면 GitHub 이슈도 생성 (생성 전 확인함)
-    "checkpoints": ["plan", "commit"], // 이 단계 뒤에 멈추고 사람에게 확인 ([] = 전구간 자동)
-    "maxCycles": 1                     // 뒤 단계가 앞으로 되돌릴 수 있는 최대 횟수
+    "issue": { "github": false },    // true면 GitHub 이슈도 생성 (생성 전 확인함)
+    "checkpoints": ["plan", "ship"], // 이 단계 뒤에 멈추고 사람에게 확인 ([] = 전구간 자동)
+    "maxCycles": 1                   // 뒤 단계가 앞으로 되돌릴 수 있는 최대 횟수
+  },
+  "ship": {
+    "mode": "pr",                 // commit | branch | pr (원격/gh 없으면 자동 강등)
+    "branchPrefix": "wb/",        // 작업 브랜치 접두사
+    "base": null,                 // PR base (null = 원격 기본 브랜치 자동 감지)
+    "draft": false,               // below-gate면 이 값과 무관하게 draft로 열림
+    "bumpPluginVersion": "patch"  // 플러그인 표면이 바뀌면 plugin.json 버전 범프 (false로 끔)
   },
   "plan": {
     "research": {
@@ -224,8 +254,8 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
 
 | 값 | 동작 |
 |----|------|
-| `"escalate"` (기본) | **멈추고 리뷰 결과·테스트 실패를 사람에게 보고.** 미달 코드를 몰래 커밋하지 않음 |
-| `"commit-warn"` | 마지막 구현 코드로 진행하고 커밋에 `[below-gate: score=n/t]` 표시 (명시적 opt-in) |
+| `"escalate"` (기본) | **멈추고 리뷰 결과·테스트 실패를 사람에게 보고.** 미달 코드를 몰래 내보내지 않음 |
+| `"commit-warn"` | 마지막 구현 코드로 진행하고 커밋에 `[below-gate: score=n/t]` 표시 + **draft PR** (명시적 opt-in) |
 | `"draft-branch"` | `wb-spell/draft/<slug>` 브랜치에 커밋 |
 
 `test.command`를 지정하면 그 명령으로, 비워두면(`null`) 프로젝트 종류로 자동 감지.
@@ -243,13 +273,14 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
 
 > 경로는 이 저장소를 클론한 실제 위치로 바꾸세요.
 
-설치 후 세션을 다시 열면 `/WBplan`, `/WBimplement`, `/WBreview`, `/WBtest`, `/WBcommit`이 뜹니다.
+설치 후 세션을 다시 열면 `/WBspell`, `/WBresearch`, `/WBplan`, `/WBcritique`,
+`/WBimplement`, `/WBreview`, `/WBtest`, `/WBship`이 뜹니다.
 
 사용 예:
 
 ```
 /WBspell 로그인 폼에 이메일 형식 검증 추가
-                 # → 이슈 작성 → 조사·계획·비판 → (확인) → 구현 → 리뷰/테스트 → (확인) → 커밋
+                 # → 이슈 작성 → 조사·계획·비판 → (확인) → 구현 → 리뷰/테스트 → (확인) → 브랜치·커밋·푸시·PR
 
 # 또는 단계별로:
 /WBplan 로그인 폼에 이메일 형식 검증 추가
@@ -259,14 +290,14 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
 /WBimplement     # 계획을 코드로 구현 (또는 직접 코드 작성)
 /WBreview        # 리뷰 + 점수 미달 시 재작성
 /WBtest          # 테스트
-/WBcommit        # 커밋
+/WBship          # 브랜치 → 커밋 → 푸시 → PR (머지는 직접)
 ```
 
 ---
 
 ## 다음에 채울 것 (TODO)
 
-- [x] 단계별 독립 스킬로 분해 (WBplan / WBimplement / WBreview / WBtest / WBcommit)
+- [x] 단계별 독립 스킬로 분해 (WBplan / WBimplement / WBreview / WBtest / WBship)
 - [x] 게이트를 **실행 위에** 재설계 — 채점 전 테스트 먼저, 실패 시 자동 미달
 - [x] 기본값 정직화 — `onExhaustion` 기본 = `escalate` (미달 코드 자동 커밋 안 함)
 - [x] 점수를 절대 지표가 아닌 휴리스틱으로 명시 (README·훅·리뷰어)
@@ -280,6 +311,8 @@ wave 구성을 `plan.md`에 적습니다. `WBimplement`는 그걸 읽고 wave마
       근거를 원본에서 검증해 통과한 사실만 계획의 입력으로 사용
 - [x] **메인 오케스트레이터 추가** (`/WBspell`) — 이슈 생성 → 전 단계 구동 → 체크포인트 정지 →
       중단 지점에서 재개, 게이트 우회 금지
+- [x] **`/WBcommit` → `/WBship`으로 확장** — `mode: commit|branch|pr`, PR 본문을 `.wb/` 산출물로
+      조립, below-gate면 draft PR, 머지는 사람 몫
 - [ ] reviewer 루브릭을 팀 규칙(보안 체크리스트 등)에 맞게 확장
 - [ ] tester 러너 추가 (Gradle, Maven 등)
 - [ ] 실제 로드 테스트로 `/WB*` 명령 노출 확인

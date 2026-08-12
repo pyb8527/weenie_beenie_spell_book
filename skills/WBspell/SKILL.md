@@ -1,6 +1,6 @@
 ---
 name: WBspell
-description: The main orchestrator — turns a request into `.wb/issue.md`, then drives the whole wb-spell pipeline from it (research → plan → critique → implement → review/test → commit), tracking the run in `.wb/run.md` and pausing at human checkpoints. Resumes an interrupted run. Use for "WBspell <task>", "run the whole pipeline", "do this end to end", "make an issue and work on it", "WBspell #123".
+description: The main orchestrator — turns a request into `.wb/issue.md`, then drives the whole wb-spell pipeline from it (research → plan → critique → implement → review/test → ship), tracking the run in `.wb/run.md` and pausing at human checkpoints. Resumes an interrupted run. Use for "WBspell <task>", "run the whole pipeline", "do this end to end", "make an issue and work on it", "WBspell #123".
 invocation_trigger: When the user wants one command to carry a request through the full pipeline, or wants an issue created and worked from.
 recommendedModel: sonnet
 ---
@@ -8,7 +8,7 @@ recommendedModel: sonnet
 # WBspell — Issue → Pipeline Orchestrator
 
 ## Role
-One entry point from a request to reviewed, tested, committed code. You **do not do the
+One entry point from a request to reviewed, tested, shipped code. You **do not do the
 work yourself**: you capture intent as an issue, then drive the stage skills in order,
 carry each stage's artifact to the next, and **stop where a human must decide or where a
 gate says stop**. Every stage still owns its own artifact and its own logic — you never
@@ -18,12 +18,12 @@ reimplement or second-guess one.
 Read `wb-spell.config.json -> run` (defaults if absent):
 
 ```json
-{ "issue": { "github": false }, "checkpoints": ["plan", "commit"], "maxCycles": 1 }
+{ "issue": { "github": false }, "checkpoints": ["plan", "ship"], "maxCycles": 1 }
 ```
 
 - `checkpoints` — stages after which you **pause and ask the user** before continuing.
-  Valid: `"issue"`, `"plan"`, `"implement"`, `"review"`, `"commit"`. Default `["plan", "commit"]`:
-  the plan gate is where human judgment is cheapest, and the commit is the hard-to-undo one.
+  Valid: `"issue"`, `"plan"`, `"implement"`, `"review"`, `"ship"`. Default `["plan", "ship"]`:
+  the plan gate is where human judgment is cheapest, and shipping is the hard-to-undo one.
   `[]` means run straight through — full autonomy is an explicit opt-in, never a default.
 - `issue.github` — also open a real GitHub issue (see step 1).
 - `maxCycles` — how many times the whole loop may re-run after a stage sends work back.
@@ -69,7 +69,7 @@ Invoke the **skills** — they own their agents, artifacts, and gates:
 | 1 | `/WBplan` | runs `/WBresearch` (parallel scouts + evidence judge) and `/WBcritique` (red-team + replan) itself | `research.md`, `plan.md`, `plan-review.md` |
 | 2 | `/WBimplement` | wave-by-wave parallel implementation | `implement.md` |
 | 3 | `/WBreview` | tests + review + rewrite-until-gate | `review.md`, `review.json` |
-| 4 | `/WBcommit` | commit, honoring below-gate markers | `commit.md` |
+| 4 | `/WBship` | branch + commit + push + PR (per `ship.mode`), honoring below-gate markers | `ship.md` |
 
 - **Do not call `/WBresearch` or `/WBcritique` separately** — `/WBplan` already runs both.
   Calling them again repeats the work and burns agents for nothing.
@@ -91,8 +91,9 @@ Invoke the **skills** — they own their agents, artifacts, and gates:
 
 ### 5. Checkpoints
 At each configured checkpoint, pause and show: what the stage produced (one screen, not the
-whole artifact), what happens next, and the cost of continuing. Then wait. The commit
-checkpoint must show the actual diff stat and the gate verdict.
+whole artifact), what happens next, and the cost of continuing. Then wait. The **ship**
+checkpoint must show the actual diff stat, the gate verdict, and — when `ship.mode` is
+`"pr"` — the branch, the base branch, and the fact that this pushes to a remote.
 
 ### 6. Close the run
 Set `status: complete | blocked | stopped`, fill in the trail, and report.
@@ -157,7 +158,7 @@ stopped_at: <stage> | none
 | 1 | plan (research+critique) | done | ACCEPT · 3 units, 2 waves | `.wb/plan.md` |
 | 2 | implement | done | 3/3 units | `.wb/implement.md` |
 | 3 | review | running | — | `.wb/review.md` |
-| 4 | commit | pending | — | — |
+| 4 | ship | pending | — | — |
 
 Status: `pending` → `running` → `done` | `blocked` | `skipped`
 
@@ -177,7 +178,7 @@ WBspell — <title>
 1. plan       <verdict>        .wb/plan.md
 2. implement  <verdict>        .wb/implement.md
 3. review     <verdict>        .wb/review.md
-4. commit     <verdict>        .wb/commit.md
+4. ship       <verdict>        .wb/ship.md
 
 Status: <complete | paused at <stage> | blocked at <stage>>
 <next action, or the open blockers>
@@ -193,8 +194,8 @@ Status: <complete | paused at <stage> | blocked at <stage>>
   (`/WBimplement` + `/WBreview`) instead of spending the full pipeline. Running six stages
   on a typo is a real cost, not thoroughness.
 - **Confirm before anything outward-facing or hard to undo**: creating a GitHub issue,
-  committing, creating a branch, pushing. The default checkpoints cover the commit; the
-  rest you ask about explicitly.
+  committing, creating a branch, pushing, opening a PR. The default checkpoints cover the
+  ship stage; the rest you ask about explicitly. **Never merge a PR** — that is the user's.
 - **Report honestly.** If a stage failed, say it failed with its output. Never present a
   blocked run as a finished one.
 - Match the user's language everywhere, including the issue.

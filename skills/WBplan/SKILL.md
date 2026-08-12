@@ -22,7 +22,7 @@ this and stop.
    the task you are planning now:
    - **Different task** → move the whole previous cycle (`issue.md`, `run.md`, `research.md`,
      `plan.md`, `plan-review.md`, `implement.md`, `review.md`, `review.json`, `test.md`,
-     `commit.md`) into `.wb/history/<YYYYMMDD-HHMMSS>-<slug-of-old-task>/`, so no downstream
+     `ship.md`) into `.wb/history/<YYYYMMDD-HHMMSS>-<slug-of-old-task>/`, so no downstream
      stage can read a stale artifact.
    - **Same task** (re-planning inside the current cycle, or `/WBspell` just wrote the issue)
      → keep them. Archiving here would throw away the issue and run log you are working from.
