@@ -9,7 +9,7 @@ import { join } from 'node:path';
 try {
   const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-  const defaults = { scoreThreshold: 80, maxRewrites: 3, onExhaustion: 'commit-warn' };
+  const defaults = { scoreThreshold: 80, maxRewrites: 3, onExhaustion: 'escalate', failOnTestFailure: true };
   let cfg = { ...defaults };
   try {
     const raw = readFileSync(join(cwd, 'wb-spell.config.json'), 'utf8');
@@ -19,8 +19,11 @@ try {
   }
 
   const context =
-    `wb-spell pipeline available. Quality gate: review score >= ${cfg.scoreThreshold}, ` +
+    `wb-spell pipeline available. Quality gate: tests must pass (a failing suite is an ` +
+    `automatic BELOW-GATE regardless of the review score), then review score >= ${cfg.scoreThreshold}, ` +
     `up to ${cfg.maxRewrites} rewrite round(s), on-exhaustion = "${cfg.onExhaustion}". ` +
+    `The review score is an LLM heuristic — not reproducible run-to-run and not for cross-change comparison; ` +
+    `it ranks findings, it does not certify quality. ` +
     `Stages are independent skills — run only what you need: ` +
     `/WBplan <task>, /WBimplement, /WBreview, /WBtest, /WBcommit.`;
 

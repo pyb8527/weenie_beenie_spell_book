@@ -1,7 +1,8 @@
 {
   "scoreThreshold": 80,
   "maxRewrites": 3,
-  "onExhaustion": "commit-warn",
+  "onExhaustion": "escalate",
+  "failOnTestFailure": true,
   "test": {
     "command": null
   },

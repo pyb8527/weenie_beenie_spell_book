@@ -1,6 +1,6 @@
 ---
 name: WBharvest
-description: Given a GitHub repo URL, clones it, scores every skill it finds 0-100 with the WBharvester agent, and imports only the ones that pass the gate (default 80) — rewriting each into your WB* skill format. Use for "WBharvest <github-url>", "import skills from <repo>", "steal the good skills from this repo".
+description: Given a GitHub repo URL, clones it, statically scans each skill for unsafe capabilities, scores every skill it finds 0-100 with the WBharvester agent, and — after explicit human approval — imports only the ones that pass the gate (default 80), rewriting each into your WB* skill format with attribution and license preserved. Use for "WBharvest <github-url>", "import skills from <repo>", "evaluate and adopt skills from this repo".
 invocation_trigger: When the user gives a GitHub URL and wants its skills evaluated, filtered by a quality score, and adopted as WB* skills.
 recommendedModel: sonnet
 ---
@@ -32,14 +32,34 @@ Prefix = `harvest.namePrefix` ?? `"WB"`.
    clone the repo then scope discovery to that subdir.
 3. **Discover candidates.** Every directory that directly contains a `SKILL.md` is one
    candidate skill. List them with their paths.
-4. **Score each candidate — in parallel.** Candidates are independent, so spawn **one
+4. **Static safety scan FIRST — a code gate, before the LLM sees anything.** For each
+   candidate run the deterministic scanner:
+
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/skills/WBharvest/scripts/scan-skill.mjs" <candidate-dir>
+   ```
+
+   It exits `0` (clean) or `2` (hits) and prints `{ risky, hitCount, hits[] }`. It grep-matches
+   for capabilities a documentation skill has no business shipping: `rm -rf`, `curl … | sh`,
+   `child_process`/`exec`, `eval`/`Function`, base64-decode, network egress, server bind, external
+   URLs, secret access, and agent-injection phrases. **Do not rely on the LLM judge to catch these
+   — an LLM reading untrusted `SKILL.md` is the target of prompt injection, not a defense against
+   it.** Any candidate with `risky: true` is **quarantined**: it is NOT eligible for auto-import.
+5. **Score each remaining candidate — in parallel.** Candidates are independent, so spawn **one
    `WBharvester` agent per candidate, all launched in a single message** so they run
    concurrently (the harness caps how many run at once and queues the rest — just launch
    them all). Each returns strict JSON `{ score, proposedName, category, findings, summary,
    safety }`. `safety: "unsafe"` is an automatic reject regardless of score. Collect every
    verdict before gating.
-5. **Gate.** Keep a candidate only if `score >= threshold` **and** `safety != "unsafe"`.
-6. **Import each kept skill** into `skills/<WBname>/`:
+6. **Gate.** A candidate is eligible for import only if **the static scan was clean
+   (`risky: false`)** AND `score >= threshold` AND `safety != "unsafe"`. Anything else is
+   rejected or quarantined.
+7. **Human approval before writing — never auto-register.** Print the table below and **stop
+   for explicit user confirmation** of exactly which skills to import. Newly written skills are
+   picked up by the `./skills/` glob and load in *every future session*, so a bad import is
+   persistent — the human, not the model, makes the final call. Quarantined (risky) candidates
+   may only be imported if the user reviews the scanner hits and explicitly overrides.
+8. **Import each approved skill** into `skills/<WBname>/`:
    - Compute `<WBname>` = prefix + PascalCase of the source slug (drop non-alphanumerics):
      `pdf → WBPdf`, `mcp-builder → WBMcpBuilder`, `web-artifacts-builder → WBWebArtifactsBuilder`.
      Prefer the agent's `proposedName` if it already follows this rule.
@@ -52,26 +72,30 @@ Prefix = `harvest.namePrefix` ?? `"WB"`.
    - Append an attribution line at the end of the body:
      `> Harvested from \`<repo-url>\` (original: \`<slug>\`) · scored <score>/100 by WBharvest.`
    - If the source repo has a `LICENSE`/`NOTICE`, copy it into the skill folder too.
-7. **Clean up** the temp clone from the scratchpad.
+9. **Clean up** the temp clone from the scratchpad.
 
-`log` per candidate: `<slug>: score=<n>/<threshold> -> <import WBname | reject | skip>`.
+`log` per candidate: `<slug>: scan=<clean|risky(n)> score=<n>/<threshold> -> <import WBname | reject | quarantine | skip>`.
 
 ## Output
 Print a table and a one-line summary:
 
 ```
 WBharvest — <repo-url>  (gate: <threshold>/100)
-| skill                | score | safety | result            |
-|----------------------|-------|--------|-------------------|
-| pdf                  |  92   |  ok    | imported: WBPdf   |
-| slack-gif-creator    |  74   |  ok    | rejected (< 80)   |
-| sketchy-installer    |  95   | unsafe | rejected (unsafe) |
+| skill                | scan       | score | safety | result             |
+|----------------------|------------|-------|--------|--------------------|
+| pdf                  | clean      |  92   |  ok    | approved → WBPdf   |
+| slack-gif-creator    | clean      |  74   |  ok    | rejected (< 80)    |
+| sketchy-installer    | risky (4)  |  95   | unsafe | quarantined        |
 
-Imported N of M skills into skills/. New WB* skills auto-register via plugin.json (./skills/).
+M candidates evaluated. Awaiting your confirmation on which to import (none written yet).
 ```
 
 ## Rules
-- **Never write a rejected or unsafe skill into `skills/`.** The gate is the whole point.
+- **Never write a rejected, unsafe, or unconfirmed skill into `skills/`.** The gate — static
+  scan, then LLM score, then explicit human approval — is the whole point.
+- **Nothing is written without explicit user confirmation.** No silent auto-import.
+- **Never auto-import a `risky` (static-scan hit) candidate.** Quarantine it; a human must
+  review the scanner hits and override in words.
 - Clone only into the scratchpad; never leave a nested repo or `.git` inside the project.
 - Do not modify the source skills' behavior — only their frontmatter `name` and attribution.
 - New skills are picked up by the existing `"skills": ["./skills/"]` glob; no plugin.json edit

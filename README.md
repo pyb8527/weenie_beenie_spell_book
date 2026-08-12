@@ -15,7 +15,7 @@
 |------|---------|
 | `/WBplan <작업>` | 작업의 계획/스펙 작성 (파일·접근법·인수기준). `.wb/plan.md`에 저장 |
 | `/WBimplement <작업>` | 계획(또는 작업 설명)을 실제 코드로 구현. `.wb/plan.md`가 있으면 그 스펙을 사용 |
-| `/WBreview` | 현재 변경분을 리뷰 → 0~100 점수 → 미달 시 재작성 반복(게이트). 결과를 `.wb/review.json`에 저장 |
+| `/WBreview` | 현재 변경분을 리뷰 → **테스트 먼저 실행**(실패 시 점수 무관 자동 미달) → 0~100 점수 → 미달 시 재작성 반복(게이트). 결과를 `.wb/review.json`에 저장 |
 | `/WBtest` | 테스트 실행 후 pass/fail 보고 |
 | `/WBcommit` | 변경분 커밋 (`.wb/review.json`의 below-gate 표시 반영) |
 | `/WBharvest <github-url>` | 외부 스킬 저장소를 클론 → 각 스킬을 0~100점 채점(`WBharvester`) → 게이트(기본 80점) 통과분만 `WB*` 형식 내 스킬로 가져오기 |
@@ -65,16 +65,21 @@
 {
   "scoreThreshold": 80,         // 이 점수 미만이면 재작성 (WBreview)
   "maxRewrites": 3,             // 최대 재작성 횟수
-  "onExhaustion": "commit-warn" // 3회 소진 후에도 미달이면?
+  "onExhaustion": "escalate",   // 3회 소진 후에도 미달이면? (기본: 사람에게 보고)
+  "failOnTestFailure": true     // 테스트 실패 시 점수 무관 자동 미달
 }
 ```
 
-`onExhaustion` — 3회 재작성해도 임계값 미달일 때:
+> **점수는 측정값이 아니라 휴리스틱입니다.** LLM이 매기는 0~100 점수는 실행 간 재현되지
+> 않고, 서로 다른 변경끼리 비교할 수 없습니다. 실제로 게이트를 통과시키는 조건은
+> **① 테스트 통과**와 **② 미해결 high-severity 지적 없음**이며, 점수는 그 위의 보조 지표일 뿐입니다.
+
+`onExhaustion` — 3회 재작성해도 게이트 미달일 때:
 
 | 값 | 동작 |
 |----|------|
-| `"commit-warn"` (기본) | **마지막 구현 코드로 진행.** 커밋에 `[below-gate: score=n/t]` 표시만 남김 |
-| `"escalate"` | 멈추고 리뷰 결과를 사람에게 보고 |
+| `"escalate"` (기본) | **멈추고 리뷰 결과·테스트 실패를 사람에게 보고.** 미달 코드를 몰래 커밋하지 않음 |
+| `"commit-warn"` | 마지막 구현 코드로 진행하고 커밋에 `[below-gate: score=n/t]` 표시 (명시적 opt-in) |
 | `"draft-branch"` | `wb-spell/draft/<slug>` 브랜치에 커밋 |
 
 `test.command`를 지정하면 그 명령으로, 비워두면(`null`) 프로젝트 종류로 자동 감지.
@@ -86,9 +91,11 @@
 이 저장소는 **플러그인이자 로컬 마켓플레이스**입니다 (`.claude-plugin/marketplace.json`).
 
 ```
-/plugin marketplace add D:\weenie_beenie_spell
+/plugin marketplace add C:\weenie_beenie_spell_book
 /plugin install wb-spell@weenie-beenie-spell-book
 ```
+
+> 경로는 이 저장소를 클론한 실제 위치로 바꾸세요.
 
 설치 후 세션을 다시 열면 `/WBplan`, `/WBimplement`, `/WBreview`, `/WBtest`, `/WBcommit`이 뜹니다.
 
@@ -107,9 +114,11 @@
 ## 다음에 채울 것 (TODO)
 
 - [x] 단계별 독립 스킬로 분해 (WBplan / WBimplement / WBreview / WBtest / WBcommit)
-- [x] `onExhaustion` = `commit-warn` (마지막 구현 코드로 진행)
+- [x] 게이트를 **실행 위에** 재설계 — 채점 전 테스트 먼저, 실패 시 자동 미달
+- [x] 기본값 정직화 — `onExhaustion` 기본 = `escalate` (미달 코드 자동 커밋 안 함)
+- [x] 점수를 절대 지표가 아닌 휴리스틱으로 명시 (README·훅·리뷰어)
+- [x] `WBharvest`에 결정적 정적 안전 스캐너 + 사람 승인 단계 추가
 - [x] `WBimplement` 스킬 추가 (계획 → 자동 구현)
-- [x] `WBharvest` 스킬 추가 (외부 저장소 스킬 채점·필터·가져오기)
 - [ ] reviewer 루브릭을 팀 규칙(보안 체크리스트 등)에 맞게 확장
 - [ ] tester 러너 추가 (Gradle, Maven 등)
 - [ ] 실제 로드 테스트로 `/WB*` 명령 노출 확인

@@ -23,6 +23,12 @@ from `.wb/plan.md`.
 - Acceptance criteria — is each one actually met?
 
 ## Scoring rubric (0-100)
+The score is a **heuristic to rank findings**, not a calibrated measurement — it is not
+reproducible run-to-run and not comparable across different changes. Its real job is the
+`findings` list and their severities; the number just summarizes them. What actually gates
+the pipeline is **tests passing** and **no unresolved high-severity finding** — so mark
+severities accurately and never let a plausible-but-unverified issue ride as "high".
+
 - 90-100: correct, no notable issues, criteria all met.
 - 80-89: correct with minor nits only.
 - 60-79: has real issues (a bug, a missed criterion, a med-severity concern).
