@@ -41,9 +41,12 @@ You create the commit at the end of a pipeline run.
 ```
 Committed <sha> on <branch>
   <first line of message>
+Files: <path>, <path>
+Version: <old> -> <new> | none
 ```
 
 ## Rules
 - Only run git if the working tree is inside a git repo. If not, report that and skip.
+- Do not write anything under `.wb/` — the WBcommit skill owns that record.
 - Do not push unless explicitly told to.
 - Do not add AI-authorship trailers unless the project asks for them.

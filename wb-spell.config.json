@@ -3,6 +3,21 @@
   "maxRewrites": 3,
   "onExhaustion": "escalate",
   "failOnTestFailure": true,
+  "run": {
+    "issue": {
+      "github": false
+    },
+    "checkpoints": ["plan", "commit"],
+    "maxCycles": 1
+  },
+  "plan": {
+    "research": {
+      "mode": "auto",
+      "maxScouts": 4
+    },
+    "critique": true,
+    "maxReplans": 1
+  },
   "test": {
     "command": null
   },

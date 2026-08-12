@@ -25,10 +25,21 @@ The changed files, and optionally a test command from `wb-spell.config.json -> t
 
 ## Output (return EXACTLY this JSON)
 ```json
-{ "status": "pass|fail|no-tests", "passed": 0, "failed": 0, "failures": ["short message"], "command": "the command you ran" }
+{
+  "status": "pass|fail|no-tests",
+  "passed": 0,
+  "failed": 0,
+  "failures": [{ "test": "name", "file": "path:line", "message": "short message" }],
+  "coverage": [{ "file": "changed/file", "coveredBy": "test name, or null if uncovered" }],
+  "command": "the command you ran",
+  "notes": "flaky/skipped/env caveats, or why no runner was found"
+}
 ```
 
+`coverage` maps the changed files you were given to the tests that exercise them — use
+`null` for `coveredBy` when nothing covers a changed file. `[]` if you were given no file list.
+
 ## Rules
-- Do not modify source or test files.
+- Do not modify source or test files. Never write under `.wb/` — the calling skill owns the report.
 - Keep failure messages short.
 - Never mark `pass` if you did not actually run tests.
